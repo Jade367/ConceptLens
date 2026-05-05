@@ -1,0 +1,298 @@
+.conceptlens-toolbar {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  max-width: calc(100vw - 16px);
+  padding: 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-primary);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 22%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
+  transition: opacity 120ms ease, transform 120ms ease;
+  flex-wrap: wrap;
+}
+
+.conceptlens-toolbar.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.conceptlens-toolbar button {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: var(--font-ui-small);
+  white-space: nowrap;
+}
+
+.conceptlens-toolbar button:hover {
+  background: var(--background-modifier-hover);
+}
+
+.conceptlens-toolbar.is-rtl {
+  direction: rtl;
+}
+
+.modal.conceptlens-modal-frame {
+  box-sizing: border-box;
+  width: min(390px, calc(100vw - 32px)) !important;
+  min-width: 0 !important;
+  max-width: min(390px, calc(100vw - 32px)) !important;
+  min-height: 0;
+  overflow: hidden;
+  border: 0.5px solid color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--background-primary) 82%, #111318);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 28%);
+}
+
+.modal.conceptlens-modal-frame .modal-content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+
+.modal.conceptlens-modal-frame .modal-close-button {
+  top: 12px;
+  right: 12px;
+  color: var(--text-faint);
+  transform: scale(0.68);
+}
+
+.conceptlens-modal {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, auto) auto auto;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  max-height: min(76vh, 620px);
+  padding: 22px 24px 18px;
+  color: var(--text-normal);
+}
+
+.conceptlens-modal .conceptlens-modal-header {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  min-width: 0;
+  margin: 0 24px 8px 0;
+}
+
+.conceptlens-modal.is-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.conceptlens-modal .conceptlens-modal-title {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.conceptlens-modal .conceptlens-modal-action {
+  min-width: 0;
+  color: var(--text-normal);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.conceptlens-modal .conceptlens-term {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 0 18px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.conceptlens-modal .conceptlens-term-label {
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border: 0.5px solid color-mix(in srgb, var(--background-modifier-border) 76%, transparent);
+  border-radius: 999px;
+  background: transparent;
+}
+
+.conceptlens-modal .conceptlens-term-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conceptlens-modal .conceptlens-result {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  max-width: 100%;
+  max-height: min(54vh, 430px);
+  margin: 0 0 14px;
+  padding: 0;
+  overflow: auto;
+  overflow-x: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-normal);
+  font-size: 12.5px;
+  line-height: 1.52;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.conceptlens-modal .conceptlens-result.is-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.conceptlens-modal .conceptlens-result * {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.conceptlens-modal .conceptlens-result > :first-child {
+  margin-top: 0;
+}
+
+.conceptlens-modal .conceptlens-result > :last-child {
+  margin-bottom: 0;
+}
+
+.conceptlens-modal .conceptlens-result h1 {
+  max-width: 100%;
+  margin: 0 0 0.82em;
+  color: var(--text-normal);
+  font-size: 20px !important;
+  font-weight: 760;
+  line-height: 1.12;
+}
+
+.conceptlens-modal .conceptlens-result h2,
+.conceptlens-modal .conceptlens-result h3 {
+  margin: 1.35em 0 0.48em;
+  color: var(--text-muted);
+  font-size: 10.5px !important;
+  font-weight: 760;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.conceptlens-modal .conceptlens-result p,
+.conceptlens-modal .conceptlens-result ul,
+.conceptlens-modal .conceptlens-result ol {
+  margin: 0.52em 0;
+  color: color-mix(in srgb, var(--text-normal) 86%, var(--text-muted));
+  font-weight: 500;
+}
+
+.conceptlens-modal .conceptlens-result h1 + p {
+  color: var(--text-normal);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.58;
+}
+
+.conceptlens-modal .conceptlens-result h3 + p,
+.conceptlens-modal .conceptlens-result h3 + ul,
+.conceptlens-modal .conceptlens-result h3 + ol {
+  padding: 8px 10px;
+  border: 0.5px solid color-mix(in srgb, var(--background-modifier-border) 68%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--background-secondary) 58%, transparent);
+  color: color-mix(in srgb, var(--text-muted) 85%, var(--text-normal));
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.conceptlens-modal .conceptlens-result li {
+  margin: 0.22em 0;
+}
+
+.conceptlens-modal .conceptlens-result strong {
+  color: var(--text-normal);
+  font-weight: 750;
+}
+
+.conceptlens-modal .conceptlens-result a {
+  color: color-mix(in srgb, var(--interactive-accent) 72%, white);
+}
+
+.conceptlens-modal .conceptlens-error {
+  color: var(--text-error);
+}
+
+.conceptlens-modal .conceptlens-ai-disclaimer {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  margin: 0 0 10px;
+  color: var(--text-faint);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.conceptlens-modal .conceptlens-ai-disclaimer-title {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-weight: 650;
+}
+
+.conceptlens-modal .conceptlens-ai-disclaimer-body {
+  min-width: 0;
+}
+
+.conceptlens-modal .conceptlens-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+  min-height: 24px;
+  margin-top: 2px;
+}
+
+.conceptlens-modal .conceptlens-actions button {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--background-modifier-border) 72%, transparent);
+  background: color-mix(in srgb, var(--background-secondary) 64%, transparent);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.conceptlens-modal .conceptlens-actions button.mod-cta {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.conceptlens-settings .setting-item-control input[type="text"],
+.conceptlens-settings .setting-item-control input[type="password"] {
+  min-width: min(440px, 44vw);
+}
+
+.conceptlens-advanced-settings {
+  margin: 12px 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.conceptlens-advanced-settings summary {
+  padding: 14px 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-ui-small);
+}
