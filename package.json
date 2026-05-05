@@ -1,6 +1,6 @@
 {
   "name": "conceptlens",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "AI concept capture for Obsidian.",
   "main": "main.js",
   "scripts": {

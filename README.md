@@ -85,6 +85,10 @@ The release assets are:
 - `manifest.json`
 - `styles.css`
 
+## Support
+
+If ConceptLens helps your reading workflow, you can support development through [GitHub Sponsors](https://github.com/sponsors/Jade367).
+
 ## License
 
 MIT
