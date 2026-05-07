@@ -469,8 +469,8 @@ function fingerprintApiKey(apiKey: string): string {
 function buildSafeAutoDetectFailureMessage(): string {
   return [
     "Auto-detect could not safely identify this API key from its prefix.",
-    "For privacy, ConceptLens no longer sends one key to many providers by default.",
-    "Choose the Provider preset manually in Advanced AI settings, or enable Active provider probing there if you explicitly want ConceptLens to test supported providers."
+    "For privacy, the plugin no longer sends one key to many providers by default.",
+    "Choose the provider preset manually in advanced AI settings, or enable active provider probing there if you explicitly want the plugin to test supported providers."
   ].join(" ");
 }
 
@@ -484,7 +484,7 @@ function buildAutoDetectFailureMessage(probes: ProbeSummary[]): string {
 
   return [
     "Auto-detect could not identify this API key.",
-    "ConceptLens tried the supported providers with a tiny probe request. Choose a provider preset manually, or use Custom endpoint if this key belongs to another OpenAI-compatible service.",
+    "The plugin tried the supported providers with a tiny probe request. Choose a provider preset manually, or use custom endpoint if this key belongs to another compatible service.",
     details ? `Probe results: ${details}` : ""
   ]
     .filter(Boolean)

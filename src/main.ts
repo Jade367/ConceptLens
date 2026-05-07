@@ -82,7 +82,8 @@ export default class ConceptLensPlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     const data = ((await this.loadData()) ?? {}) as Partial<ConceptLensSettings> & { provider?: unknown };
-    const { provider: _provider, ...settings } = data;
+    const settings = { ...data };
+    delete settings.provider;
 
     this.settings = {
       ...DEFAULT_SETTINGS,
@@ -180,7 +181,7 @@ export default class ConceptLensPlugin extends Plugin {
         return;
       }
 
-      new Notice("ConceptLens is generating a concept card...");
+      new Notice("Generating a concept card...");
       const content = await this.aiService.generateConceptCard(selection);
       await this.noteCreator.createConceptNote(selection, content);
     } catch (error) {

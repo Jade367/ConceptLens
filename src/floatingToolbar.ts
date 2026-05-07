@@ -26,7 +26,7 @@ export class FloatingToolbar {
   constructor(private options: FloatingToolbarOptions) {
     this.containerEl = document.body.createDiv({ cls: "conceptlens-toolbar" });
     this.containerEl.setAttr("role", "toolbar");
-    this.containerEl.setAttr("aria-label", "ConceptLens actions");
+    this.containerEl.setAttr("aria-label", "Concept lens actions");
 
     ACTIONS.forEach((action) => {
       const button = this.containerEl.createEl("button", {
@@ -71,10 +71,10 @@ export class FloatingToolbar {
   show(selection: CapturedSelection): void {
     this.selection = selection;
     this.refreshLabels();
-    this.containerEl.style.visibility = "hidden";
+    this.containerEl.addClass("is-measuring");
     this.containerEl.addClass("is-visible");
     this.position(selection);
-    this.containerEl.style.visibility = "";
+    this.containerEl.removeClass("is-measuring");
   }
 
   hide(source?: CapturedSelection["source"]): void {
@@ -124,8 +124,10 @@ export class FloatingToolbar {
     let left = selectionRect.left + selectionRect.width / 2 - toolbarRect.width / 2;
     left = Math.max(margin, Math.min(left, window.innerWidth - toolbarRect.width - margin));
 
-    this.containerEl.style.top = `${Math.round(top)}px`;
-    this.containerEl.style.left = `${Math.round(left)}px`;
+    this.containerEl.setCssProps({
+      "--conceptlens-toolbar-top": `${Math.round(top)}px`,
+      "--conceptlens-toolbar-left": `${Math.round(left)}px`
+    });
   }
 
   private refreshLabels(): void {

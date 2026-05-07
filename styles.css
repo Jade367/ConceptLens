@@ -1,5 +1,7 @@
 .conceptlens-toolbar {
   position: fixed;
+  top: var(--conceptlens-toolbar-top, 0);
+  left: var(--conceptlens-toolbar-left, 0);
   z-index: 9999;
   display: flex;
   gap: 4px;
@@ -21,6 +23,10 @@
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
+}
+
+.conceptlens-toolbar.is-measuring {
+  visibility: hidden;
 }
 
 .conceptlens-toolbar button {
@@ -77,19 +83,21 @@
 .modal.conceptlens-modal-frame {
   box-sizing: border-box;
   position: fixed !important;
-  top: 72px;
-  left: 18px;
-  right: auto;
-  bottom: auto;
+  top: var(--conceptlens-modal-top, 72px) !important;
+  left: var(--conceptlens-modal-left, 18px) !important;
+  right: auto !important;
+  bottom: auto !important;
   width: min(390px, calc(100vw - 32px)) !important;
   min-width: 0 !important;
   max-width: min(390px, calc(100vw - 32px)) !important;
   min-height: 0;
+  margin: 0 !important;
   overflow: hidden;
   border: 0.5px solid color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
   border-radius: 16px;
   background: color-mix(in srgb, var(--background-primary) 88%, var(--background-secondary));
   box-shadow: 0 14px 36px rgb(0 0 0 / 24%);
+  transform: none !important;
   user-select: text;
   -webkit-user-select: text;
   will-change: left, top;

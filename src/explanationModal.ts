@@ -42,7 +42,7 @@ export class ExplanationModal {
     const closeButtonEl = this.cardEl.createEl("button", {
       cls: "modal-close-button",
       attr: {
-        "aria-label": "Close ConceptLens card",
+        "aria-label": "Close result card",
         type: "button"
       }
     });
@@ -93,10 +93,10 @@ export class ExplanationModal {
     contentEl.setAttr("dir", this.options.outputLanguage === "ar" ? "rtl" : "ltr");
 
     const headerEl = contentEl.createDiv({ cls: "conceptlens-modal-header" });
-    headerEl.setAttr("aria-label", "Move ConceptLens result card");
+    headerEl.setAttr("aria-label", "Move result card");
     headerEl.createEl("div", {
       cls: "conceptlens-modal-title",
-      text: "ConceptLens"
+      text: "Concept lens"
     });
     headerEl.createEl("div", {
       cls: "conceptlens-modal-action",
@@ -305,13 +305,10 @@ export class ExplanationModal {
     const nextLeft = clamp(left, margin, maxLeft);
     const nextTop = clamp(top, margin, maxTop);
 
-    this.cardEl.style.setProperty("position", "fixed", "important");
-    this.cardEl.style.setProperty("left", `${Math.round(nextLeft)}px`, "important");
-    this.cardEl.style.setProperty("top", `${Math.round(nextTop)}px`, "important");
-    this.cardEl.style.setProperty("right", "auto", "important");
-    this.cardEl.style.setProperty("bottom", "auto", "important");
-    this.cardEl.style.setProperty("margin", "0", "important");
-    this.cardEl.style.setProperty("transform", "none", "important");
+    this.cardEl.setCssProps({
+      "--conceptlens-modal-left": `${Math.round(nextLeft)}px`,
+      "--conceptlens-modal-top": `${Math.round(nextTop)}px`
+    });
   }
 
   private positionNearSelection(): void {

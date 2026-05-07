@@ -14,11 +14,11 @@ const LANGUAGE_LABELS: Record<OutputLanguage, string> = {
 const PROVIDER_LABELS: Record<AiProviderPreset, string> = {
   auto: "Auto-detect",
   openai: "OpenAI",
-  kimi: "Kimi Platform / Moonshot",
-  "kimi-cn": "Kimi Platform / Moonshot China",
-  "kimi-code": "Kimi Code",
+  kimi: "Kimi platform / Moonshot",
+  "kimi-cn": "Kimi platform / Moonshot China",
+  "kimi-code": "Kimi code",
   qwen: "Qwen / DashScope China",
-  "qwen-intl": "Qwen / DashScope International",
+  "qwen-intl": "Qwen / DashScope international",
   "qwen-us": "Qwen / DashScope US",
   glm: "GLM / Zhipu",
   doubao: "Doubao / Volcengine",
@@ -57,7 +57,9 @@ export class ConceptLensSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.addClass("conceptlens-settings");
 
-    containerEl.createEl("h2", { text: "ConceptLens" });
+    new Setting(containerEl)
+      .setName("Concept lens")
+      .setHeading();
 
     new Setting(containerEl)
       .setName("Floating toolbar")
@@ -80,7 +82,7 @@ export class ConceptLensSettingTab extends PluginSettingTab {
       .addText((text) => {
         text.inputEl.type = "password";
         text
-          .setPlaceholder("sk-...")
+          .setPlaceholder("API key")
           .setValue(this.plugin.settings.apiKey)
           .onChange(async (value) => {
             const nextKey = value.trim();
@@ -94,11 +96,11 @@ export class ConceptLensSettingTab extends PluginSettingTab {
       });
 
     const advancedEl = containerEl.createEl("details", { cls: "conceptlens-advanced-settings" });
-    advancedEl.createEl("summary", { text: "Advanced / custom AI settings" });
+    advancedEl.createEl("summary", { text: "Advanced/custom AI settings" });
 
     new Setting(advancedEl)
       .setName("Provider preset")
-      .setDesc("Auto uses safe key-prefix detection. Generic sk- keys usually need a manual provider preset.")
+      .setDesc("Auto-detect uses safe key-prefix detection. Generic keys usually need a manual provider preset.")
       .addDropdown((dropdown) => {
         Object.entries(PROVIDER_LABELS).forEach(([value, label]) => {
           dropdown.addOption(value, label);
@@ -119,7 +121,7 @@ export class ConceptLensSettingTab extends PluginSettingTab {
 
     new Setting(advancedEl)
       .setName("Active provider probing")
-      .setDesc("Off by default for privacy. If enabled, Auto may send tiny probe requests with this API key to supported providers until one accepts it.")
+      .setDesc("Off by default for privacy. If enabled, the plugin may send tiny probe requests with this API key to supported providers until one accepts it.")
       .addToggle((toggle) => {
         toggle
           .setValue(this.plugin.settings.activeProviderDetectionEnabled)
@@ -174,7 +176,7 @@ export class ConceptLensSettingTab extends PluginSettingTab {
           : this.plugin.settings.providerPreset === "auto" && this.plugin.settings.autoDetectedProvider
             ? `Auto-detected provider: ${PROVIDER_LABELS[this.plugin.settings.autoDetectedProvider]}.`
             : this.plugin.settings.providerPreset === "auto"
-              ? "Auto will show the resolved endpoint after a safe prefix match or an explicit active probe."
+              ? "Auto-detect will show the resolved endpoint after a safe prefix match or an explicit active probe."
               : "Read-only preview of the endpoint used by the selected provider preset."
       )
       .addText((text) => {
@@ -195,7 +197,7 @@ export class ConceptLensSettingTab extends PluginSettingTab {
 
     new Setting(advancedEl)
       .setName("Reset AI defaults")
-      .setDesc("Use the built-in OpenAI-compatible defaults again.")
+      .setDesc("Restore the default AI connection settings.")
       .addButton((button) => {
         button
           .setButtonText("Reset")
@@ -245,14 +247,14 @@ export class ConceptLensSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Reset settings")
-      .setDesc("Restore ConceptLens defaults. Your concept notes are not changed.")
+      .setDesc("Restore default settings. Your concept notes are not changed.")
       .addButton((button) => {
         button
           .setButtonText("Reset")
           .onClick(async () => {
             this.plugin.settings = { ...DEFAULT_SETTINGS };
             await this.plugin.saveSettings();
-            new Notice("ConceptLens settings reset.");
+            new Notice("Settings reset.");
             this.display();
           });
       });

@@ -1,7 +1,7 @@
 {
   "id": "conceptlens",
   "name": "ConceptLens",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "minAppVersion": "1.5.0",
   "description": "Capture selected terms into reusable AI-generated concept notes with contextual explanation, translation, and expansion.",
   "author": "Yu",
