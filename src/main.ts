@@ -13,6 +13,7 @@ export default class ConceptLensPlugin extends Plugin {
   private toolbar!: FloatingToolbar;
   private aiService!: AiService;
   private noteCreator!: NoteCreator;
+  private activeResultCard: ExplanationModal | null = null;
   private readingSelectionTimer: number | null = null;
 
   async onload(): Promise<void> {
@@ -36,6 +37,13 @@ export default class ConceptLensPlugin extends Plugin {
     });
 
     this.addSettingTab(new ConceptLensSettingTab(this.app, this));
+    this.addCommand({
+      id: "close-floating-ui",
+      name: "Close floating UI",
+      callback: () => {
+        this.closeFloatingUi();
+      }
+    });
 
     this.registerEditorExtension(
       createEditorSelectionExtension((selection) => {
@@ -56,7 +64,7 @@ export default class ConceptLensPlugin extends Plugin {
     }, true);
     this.registerDomEvent(document, "keydown", (event) => {
       if (event.key === "Escape") {
-        this.toolbar.hide();
+        this.closeFloatingUi();
       }
     });
     this.registerDomEvent(window, "scroll", () => {
@@ -69,6 +77,7 @@ export default class ConceptLensPlugin extends Plugin {
       window.clearTimeout(this.readingSelectionTimer);
     }
     this.toolbar?.destroy();
+    this.activeResultCard?.close();
   }
 
   async loadSettings(): Promise<void> {
@@ -87,6 +96,12 @@ export default class ConceptLensPlugin extends Plugin {
 
   hideToolbar(): void {
     this.toolbar.hide();
+  }
+
+  closeFloatingUi(): void {
+    this.toolbar.hide();
+    this.activeResultCard?.close();
+    this.activeResultCard = null;
   }
 
   private handleEditorSelection(selection: SelectionSnapshot | null): void {
@@ -139,15 +154,23 @@ export default class ConceptLensPlugin extends Plugin {
       return;
     }
 
-    new ExplanationModal(this.app, {
+    this.activeResultCard?.close();
+    const resultCard = new ExplanationModal(this.app, {
       selection,
       action,
       aiService: this.aiService,
       outputLanguage: this.settings.outputLanguage,
       onSave: async (content) => {
         await this.noteCreator.createConceptNote(selection, content);
+      },
+      onClose: () => {
+        if (this.activeResultCard === resultCard) {
+          this.activeResultCard = null;
+        }
       }
-    }).open();
+    });
+    this.activeResultCard = resultCard;
+    resultCard.open();
   }
 
   private async saveSelection(selection: CapturedSelection): Promise<void> {

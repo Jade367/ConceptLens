@@ -1,3 +1,4 @@
+import { setIcon } from "obsidian";
 import { CapturedSelection, ConceptLensAction } from "./types";
 import { getUiLabels } from "./i18n";
 
@@ -19,6 +20,7 @@ const ACTIONS: ConceptLensAction[] = [
 export class FloatingToolbar {
   private containerEl: HTMLDivElement;
   private buttons = new Map<ConceptLensAction, HTMLButtonElement>();
+  private closeButtonEl: HTMLButtonElement;
   private selection: CapturedSelection | null = null;
 
   constructor(private options: FloatingToolbarOptions) {
@@ -33,13 +35,35 @@ export class FloatingToolbar {
         }
       });
       this.buttons.set(action, button);
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (this.selection) {
-          this.options.onAction(action, this.selection);
-        }
+      button.addEventListener("pointerdown", (event) => {
+        this.triggerAction(action, event);
       });
+      button.addEventListener("click", (event) => {
+        if (event instanceof MouseEvent && event.detail !== 0) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        this.triggerAction(action, event);
+      });
+    });
+    this.closeButtonEl = this.containerEl.createEl("button", {
+      cls: "conceptlens-toolbar-close",
+      attr: {
+        type: "button"
+      }
+    });
+    setIcon(this.closeButtonEl, "x");
+    this.closeButtonEl.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.hide();
+    });
+    this.closeButtonEl.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.hide();
     });
     this.refreshLabels();
   }
@@ -75,6 +99,18 @@ export class FloatingToolbar {
     return this.selection?.source ?? null;
   }
 
+  private triggerAction(action: ConceptLensAction, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const selection = this.selection;
+    if (!selection) {
+      return;
+    }
+
+    this.options.onAction(action, selection);
+  }
+
   private position(selection: CapturedSelection): void {
     const margin = 8;
     const toolbarRect = this.containerEl.getBoundingClientRect();
@@ -108,5 +144,7 @@ export class FloatingToolbar {
       button.setAttr("title", title);
       button.setAttr("aria-label", title);
     });
+    this.closeButtonEl.setAttr("title", labels.close);
+    this.closeButtonEl.setAttr("aria-label", labels.close);
   }
 }
