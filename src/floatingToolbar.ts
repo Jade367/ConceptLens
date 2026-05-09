@@ -22,6 +22,11 @@ export class FloatingToolbar {
   private buttons = new Map<ConceptLensAction, HTMLButtonElement>();
   private closeButtonEl: HTMLButtonElement;
   private selection: CapturedSelection | null = null;
+  private lastTrigger: {
+    action: ConceptLensAction;
+    selectionText: string;
+    time: number;
+  } | null = null;
 
   constructor(private options: FloatingToolbarOptions) {
     this.containerEl = document.body.createDiv({ cls: "conceptlens-toolbar" });
@@ -39,12 +44,6 @@ export class FloatingToolbar {
         this.triggerAction(action, event);
       });
       button.addEventListener("click", (event) => {
-        if (event instanceof MouseEvent && event.detail !== 0) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-
         this.triggerAction(action, event);
       });
     });
@@ -108,7 +107,26 @@ export class FloatingToolbar {
       return;
     }
 
-    this.options.onAction(action, selection);
+    const now = Date.now();
+    if (
+      this.lastTrigger &&
+      this.lastTrigger.action === action &&
+      this.lastTrigger.selectionText === selection.text &&
+      now - this.lastTrigger.time < 600
+    ) {
+      return;
+    }
+
+    this.lastTrigger = {
+      action,
+      selectionText: selection.text,
+      time: now
+    };
+
+    this.options.onAction(action, {
+      ...selection,
+      rect: { ...selection.rect }
+    });
   }
 
   private position(selection: CapturedSelection): void {

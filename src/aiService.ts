@@ -116,7 +116,7 @@ export class AiService {
     try {
       return await this.sendRequest(provider, settings, requestBody);
     } catch (error) {
-      if (!(error instanceof ProviderRequestError) || !isHighRiskRejection(error.status, error.message)) {
+      if (!(error instanceof ProviderRequestError) || !isHighRiskRejection(error.message)) {
         throw error;
       }
 
@@ -124,7 +124,7 @@ export class AiService {
       try {
         return await this.sendRequest(provider, settings, retryBody);
       } catch (retryError) {
-        if (retryError instanceof ProviderRequestError && isHighRiskRejection(retryError.status, retryError.message)) {
+        if (retryError instanceof ProviderRequestError && isHighRiskRejection(retryError.message)) {
           throw new Error(buildHighRiskRejectionMessage(provider.name, settings.outputLanguage));
         }
         throw retryError;
@@ -737,11 +737,7 @@ function buildUnauthorizedMessage(provider: ResolvedProvider, settings: ConceptL
   return `${provider.name} rejected this API key (401). Please check that the key belongs to ${provider.name}.`;
 }
 
-function isHighRiskRejection(status: number, message: string): boolean {
-  if (status === 401 || status === 402 || status === 429) {
-    return false;
-  }
-
+function isHighRiskRejection(message: string): boolean {
   return /high\s*risk|considered\s+high\s+risk|content\s+risk|risk\s+control|moderation|content\s+policy|风控|高风险|内容安全|安全审核/i.test(
     message
   );
