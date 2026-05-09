@@ -46,6 +46,16 @@ interface ProbeSummary {
   message: string;
 }
 
+class ProviderRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = "ProviderRequestError";
+  }
+}
+
 const PROBE_PRESETS: ConcreteProviderPreset[] = [
   "kimi-code",
   "kimi",
@@ -87,6 +97,46 @@ export class AiService {
       throw new Error("A matching ConceptLens AI request is still running. Please wait a moment before retrying.");
     }
 
+    const requestPromise = this.runWithSafetyRetry(provider, settings, action, selection, requestBody);
+    this.trackInFlightRequest(requestKey, requestPromise);
+    return requestPromise;
+  }
+
+  generateConceptCard(selection: CapturedSelection): Promise<string> {
+    return this.run("card", selection);
+  }
+
+  private async runWithSafetyRetry(
+    provider: ResolvedProvider,
+    settings: ConceptLensSettings,
+    action: AiAction,
+    selection: CapturedSelection,
+    requestBody: unknown
+  ): Promise<string> {
+    try {
+      return await this.sendRequest(provider, settings, requestBody);
+    } catch (error) {
+      if (!(error instanceof ProviderRequestError) || !isHighRiskRejection(error.status, error.message)) {
+        throw error;
+      }
+
+      const retryBody = buildRequestBody(provider, settings, action, selection, "safe_retry");
+      try {
+        return await this.sendRequest(provider, settings, retryBody);
+      } catch (retryError) {
+        if (retryError instanceof ProviderRequestError && isHighRiskRejection(retryError.status, retryError.message)) {
+          throw new Error(buildHighRiskRejectionMessage(provider.name, settings.outputLanguage));
+        }
+        throw retryError;
+      }
+    }
+  }
+
+  private async sendRequest(
+    provider: ResolvedProvider,
+    settings: ConceptLensSettings,
+    requestBody: unknown
+  ): Promise<string> {
     const networkPromise = requestUrl({
       url: provider.url,
       method: "POST",
@@ -94,7 +144,6 @@ export class AiService {
       body: JSON.stringify(requestBody),
       throw: false
     });
-    this.trackInFlightRequest(requestKey, networkPromise);
 
     const response = await waitForResponseWithTimeout(
       networkPromise,
@@ -105,10 +154,13 @@ export class AiService {
     const body = this.parseBody(response.json, response.text);
     if (response.status < 200 || response.status >= 300) {
       if (response.status === 401) {
-        throw new Error(buildUnauthorizedMessage(provider, settings));
+        throw new ProviderRequestError(buildUnauthorizedMessage(provider, settings), response.status);
       }
 
-      throw new Error(body.error?.message ?? `${provider.name} request failed with status ${response.status}.`);
+      throw new ProviderRequestError(
+        body.error?.message ?? `${provider.name} request failed with status ${response.status}.`,
+        response.status
+      );
     }
 
     const text = this.extractOutputText(body);
@@ -117,10 +169,6 @@ export class AiService {
     }
 
     return text;
-  }
-
-  generateConceptCard(selection: CapturedSelection): Promise<string> {
-    return this.run("card", selection);
   }
 
   private trackInFlightRequest(requestKey: string, networkPromise: Promise<unknown>): void {
@@ -579,10 +627,11 @@ function buildRequestBody(
   provider: ResolvedProvider,
   settings: ConceptLensSettings,
   action: AiAction,
-  selection: CapturedSelection
+  selection: CapturedSelection,
+  mode: "normal" | "safe_retry" = "normal"
 ): unknown {
-  const system = buildSystemInstruction(settings.outputLanguage);
-  const prompt = buildPrompt(action, selection, settings.outputLanguage);
+  const system = buildSystemInstruction(settings.outputLanguage, mode);
+  const prompt = buildPrompt(action, selection, settings.outputLanguage, mode);
   const maxOutputTokens = getMaxOutputTokens(action);
 
   if (provider.kind === "anthropic") {
@@ -686,6 +735,33 @@ function buildUnauthorizedMessage(provider: ResolvedProvider, settings: ConceptL
   }
 
   return `${provider.name} rejected this API key (401). Please check that the key belongs to ${provider.name}.`;
+}
+
+function isHighRiskRejection(status: number, message: string): boolean {
+  if (status === 401 || status === 402 || status === 429) {
+    return false;
+  }
+
+  return /high\s*risk|considered\s+high\s+risk|content\s+risk|risk\s+control|moderation|content\s+policy|风控|高风险|内容安全|安全审核/i.test(
+    message
+  );
+}
+
+function buildHighRiskRejectionMessage(providerName: string, outputLanguage: ConceptLensSettings["outputLanguage"]): string {
+  switch (outputLanguage) {
+    case "en":
+      return `${providerName} blocked this reading request as high risk. The plugin retried once with a more conservative reading prompt, but the provider still rejected it. Try selecting a shorter passage, changing the model, or retrying later.`;
+    case "ko":
+      return `${providerName}에서 이 읽기 요청을 고위험으로 판단해 차단했습니다. 더 보수적인 읽기 프롬프트로 한 번 다시 시도했지만 여전히 거절되었습니다. 선택 범위를 줄이거나 모델을 바꾼 뒤 다시 시도해 보세요.`;
+    case "ja":
+      return `${providerName} がこの読解リクエストを高リスクとしてブロックしました。より控えめな読解プロンプトで一度再試行しましたが、まだ拒否されています。選択範囲を短くするか、モデルを変更して再試行してください。`;
+    case "ar":
+      return `حظر ${providerName} طلب القراءة هذا باعتباره عالي الخطورة. أعاد المكوّن المحاولة مرة واحدة بصياغة أكثر تحفظا، لكن المزوّد رفضه أيضا. جرّب تحديد نص أقصر أو تغيير النموذج أو إعادة المحاولة لاحقا.`;
+    case "bilingual":
+    case "zh":
+    default:
+      return `${providerName} 把这次阅读请求误判为高风险并拦截了。插件已经用更保守的阅读提示词自动重试一次，但服务商仍然拒绝。可以缩短选区、换一个模型，或稍后再试。`;
+  }
 }
 
 function resolveModel(settings: ConceptLensSettings, defaultModel: string, allowLegacyModel = false): string {

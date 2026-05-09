@@ -1,5 +1,7 @@
 import { AiAction, CapturedSelection, OutputLanguage } from "./types";
 
+type PromptMode = "normal" | "safe_retry";
+
 const LANGUAGE_INSTRUCTIONS: Record<OutputLanguage, string> = {
   bilingual: "Use Chinese as the main explanation language, keep important English terms, and add concise English glosses when useful.",
   zh: "Use Chinese. Keep the selected term in its original language when it is a technical term.",
@@ -111,25 +113,49 @@ const SECTION_LABELS: Record<OutputLanguage, SectionLabels> = {
   }
 };
 
-export function buildSystemInstruction(outputLanguage: OutputLanguage): string {
-  return [
+export function buildSystemInstruction(outputLanguage: OutputLanguage, mode: PromptMode = "normal"): string {
+  const instructions = [
     "You are ConceptLens, an Obsidian reading assistant.",
     "Your job is to turn a selected fragment and its local context into a precise, reusable reading aid.",
     "Stay grounded in the provided context. Do not invent citations, sources, or background facts not needed for the task.",
     "Be concise. Prefer the smallest answer that fully satisfies the selected action.",
     LANGUAGE_INSTRUCTIONS[outputLanguage]
-  ].join("\n");
+  ];
+
+  if (mode === "safe_retry") {
+    instructions.push(
+      "This is a neutral vocabulary and reading-comprehension task for personal notes.",
+      "Only discuss lexical meaning, translation, and academic context."
+    );
+  }
+
+  return instructions.join("\n");
 }
 
-export function buildPrompt(action: AiAction, selection: CapturedSelection, outputLanguage: OutputLanguage): string {
-  const contextBlock = buildContextBlock(selection);
+export function buildPrompt(
+  action: AiAction,
+  selection: CapturedSelection,
+  outputLanguage: OutputLanguage,
+  mode: PromptMode = "normal"
+): string {
+  const contextBlock = buildContextBlock(selection, mode);
   const labels = SECTION_LABELS[outputLanguage];
+  const safetyScope =
+    mode === "safe_retry"
+      ? [
+          "Scope:",
+          "- Treat the selected text as a neutral term from a reading note.",
+          "- Answer only with meaning in context and compact study-note wording.",
+          "- If the passage is ambiguous, say what is most likely from the local context."
+        ].join("\n")
+      : "";
 
   if (action === "overview") {
     return [
       "Action: Overview.",
       "Specialization: Combine explanation, contextual translation, expansion, and save-worthy concept structure into one compact reading card.",
       contextBlock,
+      safetyScope,
       "Rules:",
       "- Do not produce four separate long answers.",
       "- Keep it compact, layered, and useful for deciding whether to save the concept.",
@@ -161,6 +187,7 @@ export function buildPrompt(action: AiAction, selection: CapturedSelection, outp
       "Action: Translate.",
       "Specialization: Translate only. Do not explain the concept unless needed to prevent a wrong translation.",
       contextBlock,
+      safetyScope,
       "Rules:",
       "- Translate the selected text according to its meaning in the supplied context.",
       "- If the selection is a term or short phrase, return one best contextual translation.",
@@ -183,6 +210,7 @@ export function buildPrompt(action: AiAction, selection: CapturedSelection, outp
       "Action: Expand.",
       "Specialization: Build a short learning extension around the selected concept.",
       contextBlock,
+      safetyScope,
       "Rules:",
       "- Start from the contextual meaning, then expand outward.",
       "- Prioritize background, contrasts, and reading connections.",
@@ -213,6 +241,7 @@ export function buildPrompt(action: AiAction, selection: CapturedSelection, outp
       "Action: Create concept card.",
       "Specialization: Write a durable Obsidian concept note from the selected text and context.",
       contextBlock,
+      safetyScope,
       "Rules:",
       "- Extract or normalize a concept from the selection.",
       "- Make the card reusable outside this source note, but keep the original context visible.",
@@ -251,6 +280,7 @@ export function buildPrompt(action: AiAction, selection: CapturedSelection, outp
     "Action: Explain.",
     "Specialization: Explain only. Do not expand, teach broadly, list related concepts, or give examples.",
     contextBlock,
+    safetyScope,
     "Rules:",
     "- First state what the selected text means in this exact context.",
     "- Then give the shortest useful general explanation.",
@@ -270,12 +300,23 @@ export function buildPrompt(action: AiAction, selection: CapturedSelection, outp
   ].join("\n");
 }
 
-function buildContextBlock(selection: CapturedSelection): string {
+function buildContextBlock(selection: CapturedSelection, mode: PromptMode): string {
+  const context = selection.context || selection.text;
+  const localContext = mode === "safe_retry" ? compactText(context, 900) : context;
+
   return [
     "Input:",
-    `Selected text: ${selection.text}`,
+    `Selected text: ${compactText(selection.text, mode === "safe_retry" ? 160 : 1200)}`,
     `Source note: ${selection.sourceName ?? "Unknown"}`,
     "Local context:",
-    selection.context || selection.text
+    localContext
   ].join("\n");
+}
+
+function compactText(text: string, maxLength: number): string {
+  const compact = text.replace(/\s+/g, " ").trim();
+  if (compact.length <= maxLength) {
+    return compact;
+  }
+  return `${compact.slice(0, maxLength).trim()}...`;
 }
