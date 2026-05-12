@@ -113,6 +113,15 @@ const SECTION_LABELS: Record<OutputLanguage, SectionLabels> = {
   }
 };
 
+const TRANSLATION_TARGETS: Record<OutputLanguage, string> = {
+  bilingual: "Chinese",
+  zh: "Chinese",
+  en: "English",
+  ko: "Korean",
+  ja: "Japanese",
+  ar: "Arabic"
+};
+
 export function buildSystemInstruction(outputLanguage: OutputLanguage, mode: PromptMode = "normal"): string {
   const instructions = [
     "You are ConceptLens, an Obsidian reading assistant.",
@@ -183,13 +192,16 @@ export function buildPrompt(
   }
 
   if (action === "translate") {
+    const translationDirection = buildTranslationDirection(selection.text, outputLanguage);
     return [
       "Action: Translate.",
       "Specialization: Translate only. Do not explain the concept unless needed to prevent a wrong translation.",
       contextBlock,
       safetyScope,
+      translationDirection,
       "Rules:",
       "- Translate the selected text according to its meaning in the supplied context.",
+      "- The translation target above overrides the general output-language instruction for the translation itself.",
       "- If the selection is a term or short phrase, return one best contextual translation.",
       "- Do not add examples, related concepts, study questions, or background.",
       "- Maximum length after the title: 2 short sentences.",
@@ -319,4 +331,45 @@ function compactText(text: string, maxLength: number): string {
     return compact;
   }
   return `${compact.slice(0, maxLength).trim()}...`;
+}
+
+function buildTranslationDirection(selectedText: string, outputLanguage: OutputLanguage): string {
+  const sourceLanguage = detectPrimaryLanguage(selectedText);
+  const targetLanguage = resolveTranslationTarget(sourceLanguage, outputLanguage);
+
+  return [
+    "Translation direction:",
+    `- Detected selected-text language: ${sourceLanguage}.`,
+    `- Translate the selected text into ${targetLanguage}.`,
+    "- Put the translated wording itself in the title."
+  ].join("\n");
+}
+
+function resolveTranslationTarget(sourceLanguage: string, outputLanguage: OutputLanguage): string {
+  if (sourceLanguage === "Chinese") {
+    return "English";
+  }
+
+  if (sourceLanguage === "English") {
+    return "Chinese";
+  }
+
+  return TRANSLATION_TARGETS[outputLanguage] ?? "Chinese";
+}
+
+function detectPrimaryLanguage(text: string): string {
+  const compact = text.replace(/\s+/g, "");
+  const counts = [
+    { language: "Japanese", count: countMatches(compact, /[\p{Script=Hiragana}\p{Script=Katakana}]/gu) },
+    { language: "Korean", count: countMatches(compact, /\p{Script=Hangul}/gu) },
+    { language: "Arabic", count: countMatches(compact, /\p{Script=Arabic}/gu) },
+    { language: "Chinese", count: countMatches(compact, /\p{Script=Han}/gu) },
+    { language: "English", count: countMatches(compact, /\p{Script=Latin}/gu) }
+  ];
+  const primary = counts.sort((first, second) => second.count - first.count)[0];
+  return primary && primary.count > 0 ? primary.language : "Unknown";
+}
+
+function countMatches(text: string, pattern: RegExp): number {
+  return Array.from(text.matchAll(pattern)).length;
 }
