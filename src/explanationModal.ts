@@ -54,6 +54,7 @@ export class ExplanationModal {
     this.renderShell();
     this.enableDrag();
     window.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("pointerdown", this.handleOutsidePointerDown, true);
     window.requestAnimationFrame(() => {
       if (!this.isClosed) {
         this.positionNearSelection();
@@ -72,6 +73,7 @@ export class ExplanationModal {
     this.dragState = null;
     this.disableDrag();
     window.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("pointerdown", this.handleOutsidePointerDown, true);
     this.renderer.unload();
     this.containerEl?.remove();
     this.containerEl = null;
@@ -267,6 +269,15 @@ export class ExplanationModal {
     if (event.key === "Escape") {
       this.close();
     }
+  };
+
+  private handleOutsidePointerDown = (event: PointerEvent): void => {
+    const target = event.target;
+    if (target instanceof Node && this.cardEl?.contains(target)) {
+      return;
+    }
+
+    this.close();
   };
 
   private canStartDrag(target: EventTarget | null): boolean {
